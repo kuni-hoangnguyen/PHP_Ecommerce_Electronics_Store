@@ -22,7 +22,7 @@ final class App
         $normalizedUri = $this->normalizeUri($uri);
         require BASE_PATH . '/middleware/auth_check.php';
         enforceAccess($normalizedUri);
-        $action = $this->routes[$method][$normalizedUri] ?? null;
+        [$action, $routeParams] = $this->resolveRoute($method, $normalizedUri);
 
         if ($action === null || count($action) !== 2) {
             $this->sendNotFound();
@@ -44,7 +44,63 @@ final class App
             return;
         }
 
-        $controller->{$controllerMethod}();
+        $controller->{$controllerMethod}(...$routeParams);
+    }
+
+    /**
+     * @return array{0: array<int, string>|null, 1: array<int, int|string>}
+     */
+    private function resolveRoute(string $method, string $uri): array
+    {
+        $methodRoutes = $this->routes[$method] ?? [];
+
+        if (isset($methodRoutes[$uri])) {
+            return [$methodRoutes[$uri], []];
+        }
+
+        foreach ($methodRoutes as $pattern => $action) {
+            [$isMatch, $params] = $this->matchDynamicRoute($pattern, $uri);
+
+            if ($isMatch) {
+                return [$action, $params];
+            }
+        }
+
+        return [null, []];
+    }
+
+    /**
+     * @return array{0: bool, 1: array<int, int|string>}
+     */
+    private function matchDynamicRoute(string $pattern, string $uri): array
+    {
+        if (strpos($pattern, '{') === false) {
+            return [false, []];
+        }
+
+        $patternSegments = explode('/', trim($pattern, '/'));
+        $uriSegments = explode('/', trim($uri, '/'));
+
+        if (count($patternSegments) !== count($uriSegments)) {
+            return [false, []];
+        }
+
+        $params = [];
+
+        foreach ($patternSegments as $index => $patternSegment) {
+            $uriSegment = $uriSegments[$index];
+
+            if (preg_match('/^\{[a-zA-Z_][a-zA-Z0-9_]*\}$/', $patternSegment) === 1) {
+                $params[] = ctype_digit($uriSegment) ? (int) $uriSegment : $uriSegment;
+                continue;
+            }
+
+            if ($patternSegment !== $uriSegment) {
+                return [false, []];
+            }
+        }
+
+        return [true, $params];
     }
 
     private function normalizeUri(string $uri): string

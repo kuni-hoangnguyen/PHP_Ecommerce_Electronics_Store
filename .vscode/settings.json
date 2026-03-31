@@ -1,0 +1,12 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^php -l \"d:\\\\Codes\\\\PHP_Ecommerce_Electronics_Store\\\\routes\\\\web\\.php\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^php -l \"d:\\\\Codes\\\\PHP_Ecommerce_Electronics_Store\\\\app\\\\helpers\\.php\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

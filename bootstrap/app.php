@@ -12,6 +12,8 @@ if (session_status() === PHP_SESSION_NONE) {
 define('BASE_PATH', dirname(__DIR__));
 define('APP_PATH', BASE_PATH . '/app');
 
+require_once APP_PATH . '/helpers.php';
+
 spl_autoload_register(function (string $className): void {
     $prefix = 'App\\';
 
