@@ -13,11 +13,21 @@ return [
         '/products'      => ['ProductController', 'index'],
         '/products/{id}' => ['ProductController', 'detail'],
 
+        '/cart'          => ['CartController', 'index'],
+        '/checkout'      => ['CheckoutController', 'index'],
+        '/orders'         => ['OrderController', 'index'],
+
         '/admin/index'   => ['AdminController', 'index'],
 
     ],
     'POST' => [
-        '/login'  => ['AuthController', 'postLoginForm'],
-        '/signup' => ['AuthController', 'postSignupForm'],
+        '/login'            => ['AuthController', 'postLoginForm'],
+        '/signup'           => ['AuthController', 'postSignupForm'],
+
+        '/cart/update'      => ['CartController', 'cartUpdate'],
+        '/cart/add'    => ['CartController', 'addToCart'],
+        '/cart/remove' => ['CartController', 'removeFromCart'],
+
+        '/checkout'         => ['CheckoutController', 'process'],
     ],
 ];

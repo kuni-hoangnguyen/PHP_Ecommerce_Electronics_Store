@@ -80,7 +80,16 @@
                     <a href="/cart" class="btn btn-light position-relative me-3 text-dark">
                         <i class="bi bi-cart3 fs-5"></i>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            0
+                            <?php
+                            $cartItemCount = 0;
+                            if (isset($_SESSION['user_id'])) {
+                                $pdo = \App\Core\Database::getInstance();
+                                $stmt = $pdo->prepare('SELECT COUNT(product_id) FROM cart_items WHERE user_id = :user_id');
+                                $stmt->execute(['user_id' => $_SESSION['user_id']]);
+                                $cartItemCount = (int) $stmt->fetchColumn();
+                            }
+                            echo $cartItemCount > 99 ? '99+' : $cartItemCount;
+                            ?>
                         </span>
                     </a>
 

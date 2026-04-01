@@ -82,7 +82,7 @@
                             <div class="swiper-slide">
                                 <div class="card h-100">
                                     <a href="/products/<?php echo htmlspecialchars($product['id']) ?>">
-                                        <img class="card-img-top" style="height: 216px; object-fit:cover;"
+                                        <img class="card-img-top" style="object-fit:cover;"
                                             src="/storage/products/<?php echo htmlspecialchars(image_url($product['image_url'] ?? null), ENT_QUOTES, 'UTF-8') ?>"
                                             alt="<?php echo htmlspecialchars($product['name']) ?>">
                                     </a>
