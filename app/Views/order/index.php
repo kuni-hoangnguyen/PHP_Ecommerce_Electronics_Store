@@ -34,6 +34,7 @@
                             <th scope="col">Khách hàng</th>
                             <th scope="col">Sản phẩm</th>
                             <th scope="col" class="text-end">Tổng tiền</th>
+                            <th scope="col"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -61,7 +62,7 @@
                         } elseif ($rawStatus === 'completed') {
                             $statusText = 'Hoàn thành';
                             $statusClass = 'bg-success';
-                        } elseif ($rawStatus === 'cancelled' || $rawStatus === 'canceled') {
+                        } elseif ($rawStatus === 'canceled') {
                             $statusText = 'Đã hủy';
                             $statusClass = 'bg-danger';
                         }
@@ -91,6 +92,7 @@
                                 <?php endif; ?>
                             </td>
                             <td class="text-end fw-bold"><?= number_format((int) ($order['total_amount'] ?? 0), 0, ',', '.') ?>đ</td>
+                            <td><a href="/orders/<?= (int) ($order['id'] ?? 0) ?>" class="btn btn-sm btn-outline-primary">Xem chi tiết</a></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>

@@ -67,7 +67,7 @@ function enforceAccess(string $uri): void
         return;
     }
 
-    if (str_starts_with($uri, '/admin/')) {
+    if ($uri === '/admin' || str_starts_with($uri, '/admin/')) {
         authorize(['admin']);
         return;
     }

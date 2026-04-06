@@ -20,10 +20,10 @@ if (!function_exists('normalized_asset_url')) {
 }
 
 if (!function_exists('image_url')) {
-    function image_url(?string $path, string $fallback = 'https://placehold.co/600x400?text=No+Image'): string
+    function image_url(?string $path): string
     {
         $normalized = normalized_asset_url($path);
 
-        return $normalized !== '' ? $normalized : $fallback;
+        return $normalized !== '' ? $normalized : '';
     }
 }

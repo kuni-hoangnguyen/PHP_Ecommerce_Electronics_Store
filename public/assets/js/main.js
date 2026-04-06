@@ -24,6 +24,20 @@ sliderElements.forEach((sliderElement) => {
   });
 });
 
+const cateSliderElements = document.querySelectorAll('.swiper-category');
+
+cateSliderElements.forEach((sliderElement) => {
+  new Swiper(sliderElement, {
+    loop: true,
+    slidesPerView: 2,
+    spaceBetween: 16,
+    navigation: {
+      nextEl: sliderElement.querySelector('.swiper-button-next'),
+      prevEl: sliderElement.querySelector('.swiper-button-prev'),
+    }
+  });
+});
+
 //////////////
 // Gallery //
 ////////////
@@ -133,4 +147,315 @@ document.querySelectorAll('.cart-table input[type="number"]').forEach((input) =>
         console.error('Error updating cart:', error);
       });
   });
+});
+
+////////////////////////////////////
+// Product Specification Builder //
+//////////////////////////////////
+
+document.addEventListener('DOMContentLoaded', function () {
+    const builders = document.querySelectorAll('[data-spec-builder]');
+
+    const createSpecRow = function (name, value) {
+        const row = document.createElement('div');
+        row.className = 'row g-2';
+        row.setAttribute('data-spec-row', '');
+        row.innerHTML = '' +
+            '<div class="col-5">' +
+                '<input type="text" class="form-control" name="spec_name[]" data-spec-name placeholder="name (vd: ram)">' +
+            '</div>' +
+            '<div class="col-5">' +
+                '<input type="text" class="form-control" name="spec_value[]" data-spec-value placeholder="value (vd: 8GB)">' +
+            '</div>' +
+            '<div class="col-2 d-grid">' +
+                '<button type="button" class="btn btn-outline-danger" data-spec-remove>X</button>' +
+            '</div>';
+
+        row.querySelector('[data-spec-name]').value = name || '';
+        row.querySelector('[data-spec-value]').value = value || '';
+        return row;
+    };
+
+    const removeRow = function (builder, row) {
+        const rowsContainer = builder.querySelector('[data-spec-rows]');
+        if (!rowsContainer || !row) {
+            return;
+        }
+
+        const rows = rowsContainer.querySelectorAll('[data-spec-row]');
+        if (rows.length <= 1) {
+            const nameInput = row.querySelector('[data-spec-name]');
+            const valueInput = row.querySelector('[data-spec-value]');
+            if (nameInput) {
+                nameInput.value = '';
+            }
+            if (valueInput) {
+                valueInput.value = '';
+            }
+            return;
+        }
+
+        row.remove();
+    };
+
+    builders.forEach(function (builder) {
+        const addButton = builder.querySelector('[data-spec-add]');
+        const rowsContainer = builder.querySelector('[data-spec-rows]');
+
+        if (!addButton || !rowsContainer) {
+            return;
+        }
+
+        addButton.addEventListener('click', function () {
+            rowsContainer.appendChild(createSpecRow('', ''));
+        });
+
+        builder.addEventListener('click', function (event) {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) {
+                return;
+            }
+
+            if (target.matches('[data-spec-remove]')) {
+                const row = target.closest('[data-spec-row]');
+                removeRow(builder, row);
+            }
+        });
+    });
+
+});
+
+///////////////////////////
+// Product Image Builder //
+/////////////////////////
+
+document.addEventListener('DOMContentLoaded', function () {
+  const imageBuilders = document.querySelectorAll('[data-image-builder]');
+
+  const syncPreview = function (row) {
+    const fileInput = row.querySelector('[data-image-file]');
+    const preview = row.querySelector('[data-image-preview]');
+
+    if (!(fileInput instanceof HTMLInputElement) || !(preview instanceof HTMLImageElement)) {
+      return;
+    }
+
+    if (!fileInput.files || fileInput.files.length === 0) {
+      preview.src = '';
+      preview.classList.add('d-none');
+      return;
+    }
+
+    const file = fileInput.files[0];
+    if (!file.type.startsWith('image/')) {
+      preview.src = '';
+      preview.classList.add('d-none');
+      return;
+    }
+
+    preview.src = URL.createObjectURL(file);
+    preview.classList.remove('d-none');
+  };
+
+  const refreshSlots = function (builder) {
+    const rows = builder.querySelectorAll('[data-image-row]');
+    const prefix = builder.getAttribute('data-image-prefix') || 'slot';
+
+    rows.forEach(function (row, index) {
+      const slotValue = prefix + '_' + index;
+      const slotInput = row.querySelector('[data-image-slot]');
+      const primaryInput = row.querySelector('[data-image-primary]');
+
+      if (slotInput instanceof HTMLInputElement) {
+        slotInput.value = slotValue;
+      }
+
+      if (primaryInput instanceof HTMLInputElement) {
+        primaryInput.value = slotValue;
+      }
+    });
+  };
+
+  const createImageRow = function (radioName) {
+    const row = document.createElement('div');
+    row.className = 'row g-2 align-items-center';
+    row.setAttribute('data-image-row', '');
+    row.innerHTML = '' +
+      '<div class="col-5">' +
+        '<input type="file" class="form-control" name="product_images[]" data-image-file accept=".jpg,.jpeg,.png,.webp,.gif">' +
+        '<input type="hidden" name="product_image_slot[]" data-image-slot value="">' +
+      '</div>' +
+      '<div class="col-3">' +
+        '<img src="" alt="preview" class="img-thumbnail d-none" data-image-preview style="max-width: 72px; max-height: 72px; object-fit: cover;">' +
+      '</div>' +
+      '<div class="col-3">' +
+        '<div class="form-check">' +
+          '<input class="form-check-input" type="radio" name="' + radioName + '" data-image-primary value="">' +
+          '<label class="form-check-label">Ảnh chính</label>' +
+        '</div>' +
+      '</div>' +
+      '<div class="col-1 d-grid">' +
+        '<button type="button" class="btn btn-outline-danger" data-image-remove>X</button>' +
+      '</div>';
+
+    return row;
+  };
+
+  imageBuilders.forEach(function (builder, builderIndex) {
+    const rowsContainer = builder.querySelector('[data-image-rows]');
+    const addButton = builder.querySelector('[data-image-add]');
+
+    if (!rowsContainer || !addButton) {
+      return;
+    }
+
+    const firstPrimary = builder.querySelector('[data-image-primary]');
+    const radioName = firstPrimary instanceof HTMLInputElement
+      ? firstPrimary.name
+      : 'product_image_primary_' + builderIndex;
+
+    builder.setAttribute('data-image-prefix', 'slot_' + builderIndex);
+    refreshSlots(builder);
+
+    addButton.addEventListener('click', function () {
+      const row = createImageRow(radioName);
+      rowsContainer.appendChild(row);
+      refreshSlots(builder);
+    });
+
+    builder.addEventListener('change', function (event) {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+
+      if (target.matches('[data-image-file]')) {
+        const row = target.closest('[data-image-row]');
+        if (row) {
+          syncPreview(row);
+        }
+      }
+    });
+
+    builder.addEventListener('click', function (event) {
+      const target = event.target;
+      if (!(target instanceof HTMLElement) || !target.matches('[data-image-remove]')) {
+        return;
+      }
+
+      const row = target.closest('[data-image-row]');
+      if (!row) {
+        return;
+      }
+
+      const rows = rowsContainer.querySelectorAll('[data-image-row]');
+      if (rows.length <= 1) {
+        const fileInput = row.querySelector('[data-image-file]');
+        const preview = row.querySelector('[data-image-preview]');
+        if (fileInput instanceof HTMLInputElement) {
+          fileInput.value = '';
+        }
+        if (preview instanceof HTMLImageElement) {
+          preview.src = '';
+          preview.classList.add('d-none');
+        }
+        return;
+      }
+
+      const selectedPrimary = row.querySelector('[data-image-primary]');
+      const wasPrimary = selectedPrimary instanceof HTMLInputElement ? selectedPrimary.checked : false;
+      row.remove();
+
+      refreshSlots(builder);
+
+      if (wasPrimary) {
+        const nextPrimary = rowsContainer.querySelector('[data-image-primary]');
+        if (nextPrimary instanceof HTMLInputElement) {
+          nextPrimary.checked = true;
+        }
+      }
+    });
+  });
+});
+
+////////////////////////
+// Admin Dashboard JS //
+//////////////////////
+
+document.addEventListener('DOMContentLoaded', function () {
+  const parseChartData = function (rawValue) {
+    if (!rawValue) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(rawValue);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  };
+
+  const chartCanvas = document.getElementById('dashboardRevenueOrderChart');
+  if (chartCanvas && typeof Chart === 'function') {
+    const labels = parseChartData(chartCanvas.dataset.chartLabels || '[]');
+    const revenueData = parseChartData(chartCanvas.dataset.chartRevenue || '[]');
+    const orderData = parseChartData(chartCanvas.dataset.chartOrders || '[]');
+
+    new Chart(chartCanvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Doanh thu (đ)',
+            data: revenueData,
+            backgroundColor: 'rgba(13, 110, 253, 0.5)',
+            borderColor: 'rgba(13, 110, 253, 1)',
+            borderWidth: 1,
+            yAxisID: 'yRevenue',
+          },
+          {
+            label: 'Số đơn',
+            data: orderData,
+            type: 'line',
+            borderColor: 'rgba(220, 53, 69, 1)',
+            backgroundColor: 'rgba(220, 53, 69, 0.2)',
+            tension: 0.25,
+            yAxisID: 'yOrders',
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        scales: {
+          yRevenue: {
+            type: 'linear',
+            position: 'left',
+            beginAtZero: true,
+          },
+          yOrders: {
+            type: 'linear',
+            position: 'right',
+            beginAtZero: true,
+            grid: {
+              drawOnChartArea: false,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  const groupBySelect = document.getElementById('dashboard-group-by');
+  const filterForm = document.getElementById('dashboard-filter-form');
+  if (groupBySelect && filterForm) {
+    groupBySelect.addEventListener('change', function () {
+      filterForm.submit();
+    });
+  }
 });

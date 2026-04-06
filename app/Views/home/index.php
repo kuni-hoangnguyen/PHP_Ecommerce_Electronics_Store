@@ -44,7 +44,7 @@
                 <section class="mb-5">
                     <h2 class="text-center mb-4">Danh mục sản phẩm</h2>
                     <?php if (! empty($categories)): ?>
-                    <div class="swiper">
+                    <div class="swiper-category">
                         <div class="swiper-wrapper">
                             <?php foreach ($categories as $category): ?>
                             <div class="swiper-slide">

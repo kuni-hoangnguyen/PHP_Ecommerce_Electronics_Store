@@ -48,6 +48,13 @@
                         <label for="address" class="form-label">Địa chỉ giao hàng</label>
                         <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
                     </div>
+                    <div class="mb-3">
+                        <label for="payment_method" class="form-label">Phương thức thanh toán</label>
+                        <select class="form-control" id="payment_method" name="payment_method" required>
+                            <option value="cash">Thanh toán khi nhận hàng</option>
+                            <!-- <option value="bank_transfer">Chuyển khoản ngân hàng</option> -->
+                        </select>
+                    </div>
                     <button type="submit" class="btn btn-primary">Tiến hành thanh toán</button>
                 </form>
             </div>

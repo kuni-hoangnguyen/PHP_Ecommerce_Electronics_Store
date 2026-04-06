@@ -47,10 +47,11 @@ final class CheckoutController extends Controller
         $productIds = $_POST['product_id'] ?? [];
         $quantities = $_POST['quantity'] ?? [];
         $unit_prices = $_POST['unit_price'] ?? [];
+        $paymentMethod = $_POST['payment_method'] ?? '';
 
         $orderStmt = $pdo->prepare(
-            'INSERT INTO orders (user_id, name, email, phone, address, total_amount, created_at)
-            VALUES (:user_id, :name, :email, :phone, :address, :total_amount, NOW())'
+            'INSERT INTO orders (user_id, name, email, phone, address, total_amount, payment_method, created_at)
+            VALUES (:user_id, :name, :email, :phone, :address, :total_amount, :payment_method, NOW())'
         );
         $orderDetailStmt = $pdo->prepare(
             'INSERT INTO order_details (order_id, product_id, quantity, unit_price, sub_total)
@@ -79,6 +80,7 @@ final class CheckoutController extends Controller
                 'phone' => $phone,
                 'address' => $address,
                 'total_amount' => $totalAmount,
+                'payment_method' => $paymentMethod,
             ]);
             $orderId = (int) $pdo->lastInsertId();
             foreach ($productIds as $index => $productId){
