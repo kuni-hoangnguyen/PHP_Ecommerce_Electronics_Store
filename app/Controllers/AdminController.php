@@ -84,21 +84,25 @@ final class AdminController extends Controller
             $filter['to_year'] = $toYear;
         }
 
-        $this->view('admin/dashboard', [
-             ...$this->basePageData('dashboard', 'Dashboard - Almus Tech Admin'),
-            'dashboardFilter' => $filter,
-            'dashboard' => $this->getDashboardData($pdo, $from, $to, $groupBy),
-        ]);
+        $this->view('admin/dashboard', array_merge(
+            $this->basePageData('dashboard', 'Dashboard - Almus Tech Admin'),
+            [
+                'dashboardFilter' => $filter,
+                'dashboard' => $this->getDashboardData($pdo, $from, $to, $groupBy),
+            ]
+        ));
     }
 
     public function categories(): void
     {
         $pdo = \App\Core\Database::getInstance();
 
-        $this->view('admin/categories', [
-             ...$this->basePageData('categories', 'Danh mục - Almus Tech Admin'),
-            'categories' => $pdo->query('SELECT * FROM categories ORDER BY id DESC')->fetchAll() ?: [],
-        ]);
+        $this->view('admin/categories', array_merge(
+            $this->basePageData('categories', 'Danh mục - Almus Tech Admin'),
+            [
+                'categories' => $pdo->query('SELECT * FROM categories ORDER BY id DESC')->fetchAll() ?: [],
+            ]
+        ));
     }
 
     public function products(): void
@@ -109,14 +113,16 @@ final class AdminController extends Controller
         $products = $this->searchProducts($pdo, $productQ);
         $productImagesByProductId = $this->getProductImagesByProductId($pdo, $products);
 
-        $this->view('admin/products', [
-             ...$this->basePageData('products', 'Sản phẩm - Almus Tech Admin'),
+        $this->view('admin/products',array_merge(
+[
+            $this->basePageData('products', 'Sản phẩm - Almus Tech Admin'),
             'productQ'             => $productQ,
             'categories'           => $pdo->query('SELECT * FROM categories ORDER BY id DESC')->fetchAll() ?: [],
             'products'             => $products,
             'productImagesByProductId' => $productImagesByProductId,
             'createProductOldInput' => $createProductOldInput,
-        ]);
+        ])
+        ) ;
     }
 
     public function orders(): void
@@ -124,11 +130,13 @@ final class AdminController extends Controller
         $pdo    = \App\Core\Database::getInstance();
         $orderQ = trim((string) ($_GET['order_q'] ?? ''));
 
-        $this->view('admin/orders', [
-             ...$this->basePageData('orders', 'Đơn hàng - Almus Tech Admin'),
+        $this->view('admin/orders', array_merge(
+           [
+             $this->basePageData('orders', 'Đơn hàng - Almus Tech Admin'),
             'orderQ' => $orderQ,
             'orders' => $this->searchOrders($pdo, $orderQ),
-        ]);
+        ] 
+        ));
     }
 
     public function customers(): void
@@ -143,11 +151,13 @@ final class AdminController extends Controller
             $selectedCustomer = $stmt->fetch() ?: null;
         }
 
-        $this->view('admin/customers', [
-             ...$this->basePageData('customers', 'Khách hàng - Almus Tech Admin'),
-            'customers'        => $pdo->query('SELECT id, name, email, role, is_active, created_at FROM users ORDER BY id DESC')->fetchAll() ?: [],
+        $this->view('admin/customers', array_merge(
+        [
+             $this->basePageData('customers', 'Khách hàng - Almus Tech Admin'),
+            'customers'        => $pdo->query('SELECT id, name, email, role, is_active, created_at FROM users WHERE role = "customer" ORDER BY id DESC')->fetchAll() ?: [],
             'selectedCustomer' => $selectedCustomer,
-        ]);
+        ]
+        ));
     }
 
     public function coupons(): void
@@ -155,10 +165,10 @@ final class AdminController extends Controller
         $pdo = \App\Core\Database::getInstance();
         $this->ensureSchema($pdo);
 
-        $this->view('admin/coupons', [
-             ...$this->basePageData('coupons', 'Coupon - Almus Tech Admin'),
+        $this->view('admin/coupons', array_merge([
+            $this->basePageData('coupons', 'Coupon - Almus Tech Admin'),
             'coupons' => $pdo->query('SELECT * FROM coupons ORDER BY id DESC')->fetchAll() ?: [],
-        ]);
+        ]));
     }
 
     public function createCategory(): void
@@ -805,6 +815,7 @@ final class AdminController extends Controller
     /** @return array<int, array<string, mixed>> */
     private function searchOrders(\PDO $pdo, string $keyword): array
     {
+
         $keyword = trim($keyword);
 
         if ($keyword === '') {
@@ -812,8 +823,16 @@ final class AdminController extends Controller
             return $stmt->fetchAll() ?: [];
         }
 
-        $stmt = $pdo->prepare('SELECT o.id, o.name, o.email, o.phone, o.total_amount, o.status, o.created_at FROM orders o WHERE CAST(o.id AS CHAR) LIKE :kw OR o.name LIKE :kw OR o.email LIKE :kw OR o.phone LIKE :kw ORDER BY o.id DESC LIMIT 100');
-        $stmt->execute(['kw' => '%' . $keyword . '%']);
+        $stmt = $pdo->prepare(
+            'SELECT o.id, o.name, o.email, o.phone, o.total_amount, o.status, o.created_at
+             FROM orders o
+              WHERE CAST(o.id AS CHAR)
+                LIKE :kw_id
+                OR o.name LIKE :kw_name
+                OR o.email LIKE :kw_email
+                OR o.phone LIKE :kw_phone
+                ORDER BY o.id DESC LIMIT 100');
+        $stmt->execute(['kw_id' =>  '%' . $keyword . '%' ,'kw_name' => '%' . $keyword . '%', 'kw_email' =>  '%' . $keyword . '%', 'kw_phone' =>  '%' . $keyword . '%']);
         return $stmt->fetchAll() ?: [];
     }
 

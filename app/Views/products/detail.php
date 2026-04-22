@@ -1,4 +1,16 @@
 <div class="container mt-4">
+    <?php
+    $flashType = (string) ($flash['type'] ?? '');
+    $flashMessage = (string) ($flash['message'] ?? '');
+    ?>
+
+    <?php if ($flashMessage !== ''): ?>
+    <div class="alert alert-<?php echo htmlspecialchars($flashType !== '' ? $flashType : 'info', ENT_QUOTES, 'UTF-8') ?> alert-dismissible fade show" role="alert">
+        <?php echo htmlspecialchars($flashMessage, ENT_QUOTES, 'UTF-8') ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <?php endif; ?>
+
     <div class="row g-3 align-items-start">
         <div class="col-md-9">
             <div class="bg-white p-3 rounded shadow-sm overflow-hidden h-100">

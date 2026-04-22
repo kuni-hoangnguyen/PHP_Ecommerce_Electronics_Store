@@ -1,9 +1,20 @@
 <?php
-$active = (string) ($activePage ?? 'dashboard');
+$active = isset($activePage) ? (string) $activePage : '';
+
+if ($active === '') {
+    $path = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+    $segments = explode('/', trim($path, '/'));
+    $active = isset($segments[1]) ? (string) $segments[1] : 'dashboard';
+
+    if ($active === '' || $active === 'index') {
+        $active = 'dashboard';
+    }
+}
+
 $flashType = (string) ($flash['type'] ?? '');
 $flashMessage = (string) ($flash['message'] ?? '');
 
-$linkClass = static function (string $target, string $active): string {
+$linkClass = function ($target, $active) {
     return $target === $active ? 'btn btn-primary btn-sm' : 'btn btn-outline-primary btn-sm';
 };
 ?>

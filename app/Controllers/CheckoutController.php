@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare (strict_types = 1);
 
 namespace App\Controllers;
 
@@ -11,11 +11,21 @@ final class CheckoutController extends Controller
     public function index(): void
     {
         $pdo = \App\Core\Database::getInstance();
+        $userId = $_SESSION['user_id'] ?? null;
+
+        $selectedRaw = trim((string) ($_GET['selected'] ?? ''));
+        $selectedIds = [];
+
+        if ($selectedRaw !== '') {
+            $selectedIds = array_values(array_unique(array_filter(
+                array_map('intval', explode(',', $selectedRaw)),
+                static fn(int $id): bool => $id > 0
+            )));
+        }
 
         $cartItems = [];
-        $userId    = $_SESSION['user_id'] ?? null;
 
-        $cartStmt = $pdo->prepare(
+        $checkoutStmt = $pdo->prepare(
             'SELECT c.quantity, p.id, p.name, p.stock, COALESCE(p.sale_price, p.price) AS price, pi.image_path
             FROM cart_items c
             JOIN products p ON c.product_id = p.id
@@ -23,8 +33,17 @@ final class CheckoutController extends Controller
             WHERE c.user_id = :user_id'
         );
         $userStmt = $pdo->prepare('SELECT name, email FROM users WHERE id = :user_id');
-        $cartStmt->execute(['user_id' => $_SESSION['user_id'] ?? 0]);
-        $cartItems = $cartStmt->fetchAll() ?: [];
+        $checkoutStmt->execute(['user_id' => $userId ?? 0]);
+        $cartItems = $checkoutStmt->fetchAll() ?: [];
+
+        if ($selectedIds !== []) {
+            $selectedLookup = array_flip($selectedIds);
+            $cartItems = array_values(array_filter(
+                $cartItems,
+                static fn(array $item): bool => isset($selectedLookup[(int) ($item['id'] ?? 0)])
+            ));
+        }
+
         $userStmt->execute(['user_id' => $userId]);
         $user = $userStmt->fetch() ?: [];
 
@@ -39,15 +58,20 @@ final class CheckoutController extends Controller
     {
         $pdo = \App\Core\Database::getInstance();
 
-        $userId = $_SESSION['user_id'] ?? null;
-        $name = $_POST['name'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $phone = $_POST['phone'] ?? '';
-        $address = $_POST['address'] ?? '';
-        $productIds = $_POST['product_id'] ?? [];
-        $quantities = $_POST['quantity'] ?? [];
-        $unit_prices = $_POST['unit_price'] ?? [];
+        $userId        = $_SESSION['user_id'] ?? null;
+        $name          = $_POST['name'] ?? '';
+        $email         = $_POST['email'] ?? '';
+        $phone         = $_POST['phone'] ?? '';
+        $address       = $_POST['address'] ?? '';
+        $productIds    = $_POST['product_id'] ?? [];
+        $quantities    = $_POST['quantity'] ?? [];
+        $unit_prices   = $_POST['unit_price'] ?? [];
         $paymentMethod = $_POST['payment_method'] ?? '';
+
+        if (! is_array($productIds) || $productIds === []) {
+            header('Location: /cart');
+            exit();
+        }
 
         $orderStmt = $pdo->prepare(
             'INSERT INTO orders (user_id, name, email, phone, address, total_amount, payment_method, created_at)
@@ -68,39 +92,39 @@ final class CheckoutController extends Controller
 
         try {
             $totalAmount = 0;
-            foreach ($productIds as $index => $productId){
-                $quantity = (int) ($quantities[$index] ?? 0);
-                $unitPrice = (float) ($unit_prices[$index] ?? 0);
+            foreach ($productIds as $index => $productId) {
+                $quantity     = (int) ($quantities[$index] ?? 0);
+                $unitPrice    = (float) ($unit_prices[$index] ?? 0);
                 $totalAmount += $quantity * $unitPrice;
             }
             $orderStmt->execute([
-                'user_id' => $userId,
-                'name' => $name,
-                'email' => $email,
-                'phone' => $phone,
-                'address' => $address,
-                'total_amount' => $totalAmount,
+                'user_id'        => $userId,
+                'name'           => $name,
+                'email'          => $email,
+                'phone'          => $phone,
+                'address'        => $address,
+                'total_amount'   => $totalAmount,
                 'payment_method' => $paymentMethod,
             ]);
             $orderId = (int) $pdo->lastInsertId();
-            foreach ($productIds as $index => $productId){
-                $quantity = (int) ($quantities[$index] ?? 0);
+            foreach ($productIds as $index => $productId) {
+                $quantity  = (int) ($quantities[$index] ?? 0);
                 $unitPrice = (float) ($unit_prices[$index] ?? 0);
-                $subTotal = $quantity * $unitPrice;
+                $subTotal  = $quantity * $unitPrice;
                 $orderDetailStmt->execute([
-                    'order_id' => $orderId,
+                    'order_id'   => $orderId,
                     'product_id' => $productId,
-                    'quantity' => $quantity,
+                    'quantity'   => $quantity,
                     'unit_price' => $unitPrice,
-                    'sub_total' => $subTotal,
+                    'sub_total'  => $subTotal,
                 ]);
                 $updatePrdStmt->execute([
                     'quantity_deduct' => $quantity,
-                    'quantity_check' => $quantity,
-                    'product_id' => $productId,
+                    'quantity_check'  => $quantity,
+                    'product_id'      => $productId,
                 ]);
                 $deleteCartStmt->execute([
-                    'user_id' => $userId,
+                    'user_id'    => $userId,
                     'product_id' => $productId,
                 ]);
             }

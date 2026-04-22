@@ -140,6 +140,8 @@ final class ProductController extends Controller
     public function detail(int $productId): void
     {
         $pdo = \App\Core\Database::getInstance();
+        $flash = $_SESSION['cart_flash'] ?? null;
+        unset($_SESSION['cart_flash']);
 
         $prdStmt = $pdo->prepare(
             "SELECT p.*
@@ -168,6 +170,7 @@ final class ProductController extends Controller
             'title'   => htmlspecialchars($product['name'] ?? 'Chi tiết sản phẩm') . ' - Almus Tech',
             'product' => $product,
             'img'     => $img,
+            'flash'   => $flash,
         ]);
     }
 

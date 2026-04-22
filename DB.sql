@@ -16,26 +16,9 @@
 
 
 -- Dumping database structure for ecommerce_almus
-CREATE DATABASE IF NOT EXISTS `ecommerce_almus` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE DATABASE IF NOT EXISTS `ecommerce_almus` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
 USE `ecommerce_almus`;
 
--- Dumping structure for table ecommerce_almus.cart_items
-CREATE TABLE IF NOT EXISTS `cart_items` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `user_id` int unsigned NOT NULL,
-  `product_id` int unsigned NOT NULL,
-  `quantity` int unsigned NOT NULL DEFAULT '1',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_cart_product` (`user_id`,`product_id`) USING BTREE,
-  KEY `idx_cart_items_product` (`product_id`),
-  CONSTRAINT `fk_cart_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT,
-  CONSTRAINT `FK_cart_items_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `chk_cart_items_quantity` CHECK ((`quantity` > 0))
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- Dumping data for table ecommerce_almus.cart_items: ~0 rows (approximately)
 
 -- Dumping structure for table ecommerce_almus.categories
 CREATE TABLE IF NOT EXISTS `categories` (
@@ -52,6 +35,29 @@ CREATE TABLE IF NOT EXISTS `categories` (
 INSERT INTO `categories` (`id`, `name`, `description`, `icon`, `status`) VALUES
 	(1, 'Đồng hồ thông minh', NULL, 'bi-smartwatch', 1),
 	(2, 'Tai nghe Bluetooth', NULL, 'bi-earbuds', 1);
+
+
+-- Dumping structure for table ecommerce_almus.users
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `role` enum('customer','admin') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'customer',
+  `is_active` tinyint NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_users_email` (`email`),
+  KEY `idx_users_role` (`role`),
+  KEY `idx_users_is_active` (`is_active`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table ecommerce_almus.users: ~2 rows (approximately)
+INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `phone`, `address`, `role`, `is_active`, `created_at`) VALUES
+	(1, 'Khách hàng 1', 'user1@gmail.com', '$2y$12$ii19aeKfPa/SHtWcmFCtM.0UtgtUaXlQ4VV6FJI7IVI6V3s3R5Hp2', NULL, NULL, 'customer', 1, '2026-03-25 18:42:40'),
+	(2, 'Admin', 'admin@gmail.com', '$2y$12$ii19aeKfPa/SHtWcmFCtM.0UtgtUaXlQ4VV6FJI7IVI6V3s3R5Hp2', NULL, NULL, 'admin', 1, '2026-04-01 17:08:06');
 
 -- Dumping structure for table ecommerce_almus.coupons
 CREATE TABLE IF NOT EXISTS `coupons` (
@@ -70,90 +76,6 @@ CREATE TABLE IF NOT EXISTS `coupons` (
 
 -- Dumping data for table ecommerce_almus.coupons: ~0 rows (approximately)
 
--- Dumping structure for table ecommerce_almus.orders
-CREATE TABLE IF NOT EXISTS `orders` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `user_id` int unsigned NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `phone` varchar(20) NOT NULL,
-  `address` text NOT NULL,
-  `total_amount` decimal(15,0) NOT NULL DEFAULT '0',
-  `payment_method` enum('cash','bank_transfer') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'cash',
-  `status` enum('pending','confirmed','shipping','completed','canceled') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'pending',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_orders_user` (`user_id`),
-  KEY `idx_orders_status` (`status`),
-  KEY `idx_orders_created_at` (`created_at`),
-  CONSTRAINT `fk_orders_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- Dumping data for table ecommerce_almus.orders: ~21 rows (approximately)
-INSERT INTO `orders` (`id`, `user_id`, `name`, `email`, `phone`, `address`, `total_amount`, `payment_method`, `status`, `created_at`) VALUES
-	(1, 1, 'Khách hàng 1', 'user1@gmail.com', '0123456789', 'VN', 12600000, 'cash', 'canceled', '2026-04-01 22:58:30'),
-	(2, 1, 'Khách 2', 'admin@gmail.com', '0123456789', '111', 7500000, 'cash', 'pending', '2026-04-03 23:29:46'),
-	(3, 1, 'Khách 3', 'user3@gmail.com', '0900000003', 'HCM', 12000000, 'bank_transfer', 'confirmed', '2026-04-02 23:39:50'),
-	(4, 1, 'Khách 4', 'user4@gmail.com', '0900000004', 'HN', 4000000, 'cash', 'shipping', '2026-04-02 23:39:50'),
-	(5, 1, 'Khách 5', 'user5@gmail.com', '0900000005', 'DN', 6000000, 'cash', 'completed', '2026-04-01 23:39:50'),
-	(6, 1, 'Khách 6', 'user6@gmail.com', '0900000006', 'HCM', 5000000, 'bank_transfer', 'pending', '2026-03-31 23:39:50'),
-	(7, 1, 'Khách 7', 'user7@gmail.com', '0900000007', 'HN', 7000000, 'cash', 'confirmed', '2026-04-01 23:39:50'),
-	(8, 1, 'Khách 8', 'user8@gmail.com', '0900000008', 'HCM', 9000000, 'cash', 'shipping', '2026-04-02 23:39:50'),
-	(9, 1, 'Khách 9', 'user9@gmail.com', '0900000009', 'DN', 4500000, 'bank_transfer', 'completed', '2026-03-29 23:39:50'),
-	(10, 1, 'Khách 10', 'user10@gmail.com', '0900000010', 'HCM', 11000000, 'cash', 'pending', '2026-03-26 23:39:50'),
-	(11, 1, 'Khách 11', 'user11@gmail.com', '0900000011', 'HN', 3000000, 'cash', 'confirmed', '2026-03-03 23:39:50'),
-	(12, 1, 'Khách 12', 'user12@gmail.com', '0900000012', 'HCM', 7500000, 'bank_transfer', 'shipping', '2026-02-03 23:39:50'),
-	(13, 1, 'Khách 13', 'user13@gmail.com', '0900000013', 'DN', 6500000, 'cash', 'completed', '2026-01-03 23:39:50'),
-	(14, 1, 'Khách 14', 'user14@gmail.com', '0900000014', 'HCM', 5000000, 'cash', 'pending', '2025-12-03 23:39:50'),
-	(15, 1, 'Khách 15', 'user15@gmail.com', '0900000015', 'HN', 8000000, 'bank_transfer', 'confirmed', '2025-12-03 23:39:50'),
-	(16, 1, 'Khách 16', 'user16@gmail.com', '0900000016', 'HCM', 4200000, 'cash', 'shipping', '2026-02-03 23:39:50'),
-	(17, 1, 'Khách 17', 'user17@gmail.com', '0900000017', 'DN', 4700000, 'cash', 'completed', '2026-03-03 23:39:50'),
-	(18, 1, 'Khách 18', 'user18@gmail.com', '0900000018', 'HCM', 2200000, 'bank_transfer', 'pending', '2026-02-03 23:39:50'),
-	(19, 1, 'Khách 19', 'user19@gmail.com', '0900000019', 'HN', 3500000, 'cash', 'confirmed', '2026-03-03 23:39:50'),
-	(20, 1, 'Khách 20', 'user20@gmail.com', '0900000020', 'HCM', 6000000, 'cash', 'shipping', '2026-03-03 23:39:50'),
-	(21, 1, 'Khách 21', 'user21@gmail.com', '0900000021', 'DN', 7500000, 'bank_transfer', 'completed', '2026-04-03 23:39:50');
-
--- Dumping structure for table ecommerce_almus.order_details
-CREATE TABLE IF NOT EXISTS `order_details` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `order_id` int unsigned NOT NULL,
-  `product_id` int unsigned NOT NULL,
-  `quantity` int unsigned NOT NULL,
-  `unit_price` decimal(15,0) NOT NULL,
-  `sub_total` decimal(15,0) NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_order_details_order` (`order_id`),
-  KEY `idx_order_details_product` (`product_id`),
-  CONSTRAINT `fk_order_details_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_order_details_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT,
-  CONSTRAINT `chk_order_details_quantity` CHECK ((`quantity` > 0))
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- Dumping data for table ecommerce_almus.order_details: ~22 rows (approximately)
-INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `quantity`, `unit_price`, `sub_total`, `created_at`) VALUES
-	(1, 1, 29, 3, 4200000, 12600000, '2026-04-03 22:58:30'),
-	(2, 2, 5, 1, 7500000, 7500000, '2026-04-03 23:29:46'),
-	(3, 2, 5, 1, 8000000, 8000000, '2026-04-03 23:39:50'),
-	(4, 3, 4, 1, 12000000, 12000000, '2026-04-03 23:39:50'),
-	(5, 4, 6, 1, 4000000, 4000000, '2026-04-03 23:39:50'),
-	(6, 5, 7, 1, 6000000, 6000000, '2026-04-03 23:39:50'),
-	(7, 6, 8, 1, 5000000, 5000000, '2026-04-03 23:39:50'),
-	(8, 7, 5, 1, 7000000, 7000000, '2026-04-03 23:39:50'),
-	(9, 8, 4, 1, 9000000, 9000000, '2026-04-03 23:39:50'),
-	(10, 9, 29, 1, 4500000, 4500000, '2026-04-03 23:39:50'),
-	(11, 10, 4, 1, 11000000, 11000000, '2026-04-03 23:39:50'),
-	(12, 11, 9, 1, 3000000, 3000000, '2026-04-03 23:39:50'),
-	(13, 12, 5, 1, 7500000, 7500000, '2026-04-03 23:39:50'),
-	(14, 13, 7, 1, 6500000, 6500000, '2026-04-03 23:39:50'),
-	(15, 14, 8, 1, 5000000, 5000000, '2026-04-03 23:39:50'),
-	(16, 15, 5, 1, 8000000, 8000000, '2026-04-03 23:39:50'),
-	(17, 16, 29, 1, 4200000, 4200000, '2026-04-03 23:39:50'),
-	(18, 17, 8, 1, 4700000, 4700000, '2026-04-03 23:39:50'),
-	(19, 18, 9, 1, 2200000, 2200000, '2026-04-03 23:39:50'),
-	(20, 19, 6, 1, 3500000, 3500000, '2026-04-03 23:39:50'),
-	(21, 20, 7, 1, 6000000, 6000000, '2026-04-03 23:39:50'),
-	(22, 21, 5, 1, 7500000, 7500000, '2026-04-03 23:39:50');
 
 -- Dumping structure for table ecommerce_almus.products
 CREATE TABLE IF NOT EXISTS `products` (
@@ -205,6 +127,7 @@ INSERT INTO `products` (`id`, `category_id`, `name`, `brand`, `short_description
 	(53, 2, 'Edifier NeoBuds Pro', 'Edifier', 'Hi-Res', 'Âm tốt', '{"chip": "-", "type": "earbuds", "model": "NeoBuds Pro", "battery": "24h", "features": "ANC", "connectivity": "Bluetooth"}', 3500000, 3200000, 75, 1, '2026-04-06 17:05:28'),
 	(54, 2, 'SoundPEATS Air4', 'SoundPEATS', 'Giá rẻ', 'Cơ bản', '{"chip": "-", "type": "earbuds", "model": "Air4", "battery": "26h", "features": "ANC", "connectivity": "Bluetooth"}', 1500000, 1300000, 120, 1, '2026-04-06 17:05:28');
 
+
 -- Dumping structure for table ecommerce_almus.product_images
 CREATE TABLE IF NOT EXISTS `product_images` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -247,27 +170,112 @@ INSERT INTO `product_images` (`id`, `product_id`, `image_path`, `is_primary`, `s
 	(62, 48, 'buds-4-pro-1.webp', 1, 0),
 	(63, 41, 'xiaomi-watch-2-pro-1.webp', 1, 0);
 
--- Dumping structure for table ecommerce_almus.users
-CREATE TABLE IF NOT EXISTS `users` (
+
+-- Dumping structure for table ecommerce_almus.orders
+CREATE TABLE IF NOT EXISTS `orders` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `password_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `role` enum('customer','admin') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'customer',
-  `is_active` tinyint NOT NULL DEFAULT '1',
+  `user_id` int unsigned NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `phone` varchar(20) NOT NULL,
+  `address` text NOT NULL,
+  `total_amount` decimal(15,0) NOT NULL DEFAULT '0',
+  `payment_method` enum('cash','bank_transfer') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'cash',
+  `status` enum('pending','confirmed','shipping','completed','canceled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_users_email` (`email`),
-  KEY `idx_users_role` (`role`),
-  KEY `idx_users_is_active` (`is_active`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  KEY `idx_orders_user` (`user_id`),
+  KEY `idx_orders_status` (`status`),
+  KEY `idx_orders_created_at` (`created_at`),
+  CONSTRAINT `fk_orders_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping data for table ecommerce_almus.users: ~2 rows (approximately)
-INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `phone`, `address`, `role`, `is_active`, `created_at`) VALUES
-	(1, 'Khách hàng 1', 'user1@gmail.com', '$2y$12$ii19aeKfPa/SHtWcmFCtM.0UtgtUaXlQ4VV6FJI7IVI6V3s3R5Hp2', NULL, NULL, 'customer', 1, '2026-03-25 18:42:40'),
-	(2, 'Admin', 'admin@gmail.com', '$2y$12$ii19aeKfPa/SHtWcmFCtM.0UtgtUaXlQ4VV6FJI7IVI6V3s3R5Hp2', NULL, NULL, 'admin', 1, '2026-04-01 17:08:06');
+-- Dumping data for table ecommerce_almus.orders: ~21 rows (approximately)
+INSERT INTO `orders` (`id`, `user_id`, `name`, `email`, `phone`, `address`, `total_amount`, `payment_method`, `status`, `created_at`) VALUES
+	(1, 1, 'Khách hàng 1', 'user1@gmail.com', '0123456789', 'VN', 12600000, 'cash', 'canceled', '2026-04-01 22:58:30'),
+	(2, 1, 'Khách 2', 'admin@gmail.com', '0123456789', '111', 7500000, 'cash', 'pending', '2026-04-03 23:29:46'),
+	(3, 1, 'Khách 3', 'user3@gmail.com', '0900000003', 'HCM', 12000000, 'bank_transfer', 'confirmed', '2026-04-02 23:39:50'),
+	(4, 1, 'Khách 4', 'user4@gmail.com', '0900000004', 'HN', 4000000, 'cash', 'shipping', '2026-04-02 23:39:50'),
+	(5, 1, 'Khách 5', 'user5@gmail.com', '0900000005', 'DN', 6000000, 'cash', 'completed', '2026-04-01 23:39:50'),
+	(6, 1, 'Khách 6', 'user6@gmail.com', '0900000006', 'HCM', 5000000, 'bank_transfer', 'pending', '2026-03-31 23:39:50'),
+	(7, 1, 'Khách 7', 'user7@gmail.com', '0900000007', 'HN', 7000000, 'cash', 'confirmed', '2026-04-01 23:39:50'),
+	(8, 1, 'Khách 8', 'user8@gmail.com', '0900000008', 'HCM', 9000000, 'cash', 'shipping', '2026-04-02 23:39:50'),
+	(9, 1, 'Khách 9', 'user9@gmail.com', '0900000009', 'DN', 4500000, 'bank_transfer', 'completed', '2026-03-29 23:39:50'),
+	(10, 1, 'Khách 10', 'user10@gmail.com', '0900000010', 'HCM', 11000000, 'cash', 'pending', '2026-03-26 23:39:50'),
+	(11, 1, 'Khách 11', 'user11@gmail.com', '0900000011', 'HN', 3000000, 'cash', 'confirmed', '2026-03-03 23:39:50'),
+	(12, 1, 'Khách 12', 'user12@gmail.com', '0900000012', 'HCM', 7500000, 'bank_transfer', 'shipping', '2026-02-03 23:39:50'),
+	(13, 1, 'Khách 13', 'user13@gmail.com', '0900000013', 'DN', 6500000, 'cash', 'completed', '2026-01-03 23:39:50'),
+	(14, 1, 'Khách 14', 'user14@gmail.com', '0900000014', 'HCM', 5000000, 'cash', 'pending', '2025-12-03 23:39:50'),
+	(15, 1, 'Khách 15', 'user15@gmail.com', '0900000015', 'HN', 8000000, 'bank_transfer', 'confirmed', '2025-12-03 23:39:50'),
+	(16, 1, 'Khách 16', 'user16@gmail.com', '0900000016', 'HCM', 4200000, 'cash', 'shipping', '2026-02-03 23:39:50'),
+	(17, 1, 'Khách 17', 'user17@gmail.com', '0900000017', 'DN', 4700000, 'cash', 'completed', '2026-03-03 23:39:50'),
+	(18, 1, 'Khách 18', 'user18@gmail.com', '0900000018', 'HCM', 2200000, 'bank_transfer', 'pending', '2026-02-03 23:39:50'),
+	(19, 1, 'Khách 19', 'user19@gmail.com', '0900000019', 'HN', 3500000, 'cash', 'confirmed', '2026-03-03 23:39:50'),
+	(20, 1, 'Khách 20', 'user20@gmail.com', '0900000020', 'HCM', 6000000, 'cash', 'shipping', '2026-03-03 23:39:50'),
+	(21, 1, 'Khách 21', 'user21@gmail.com', '0900000021', 'DN', 7500000, 'bank_transfer', 'completed', '2026-04-03 23:39:50');
+
+
+-- Dumping structure for table ecommerce_almus.order_details
+CREATE TABLE IF NOT EXISTS `order_details` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `order_id` int unsigned NOT NULL,
+  `product_id` int unsigned NOT NULL,
+  `quantity` int unsigned NOT NULL,
+  `unit_price` decimal(15,0) NOT NULL,
+  `sub_total` decimal(15,0) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_order_details_order` (`order_id`),
+  KEY `idx_order_details_product` (`product_id`),
+  CONSTRAINT `fk_order_details_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_order_details_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `chk_order_details_quantity` CHECK ((`quantity` > 0))
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table ecommerce_almus.order_details: ~22 rows (approximately)
+INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `quantity`, `unit_price`, `sub_total`, `created_at`) VALUES
+	(1, 1, 29, 3, 4200000, 12600000, '2026-04-03 22:58:30'),
+	(2, 2, 5, 1, 7500000, 7500000, '2026-04-03 23:29:46'),
+	(3, 2, 5, 1, 8000000, 8000000, '2026-04-03 23:39:50'),
+	(4, 3, 4, 1, 12000000, 12000000, '2026-04-03 23:39:50'),
+	(5, 4, 6, 1, 4000000, 4000000, '2026-04-03 23:39:50'),
+	(6, 5, 7, 1, 6000000, 6000000, '2026-04-03 23:39:50'),
+	(7, 6, 8, 1, 5000000, 5000000, '2026-04-03 23:39:50'),
+	(8, 7, 5, 1, 7000000, 7000000, '2026-04-03 23:39:50'),
+	(9, 8, 4, 1, 9000000, 9000000, '2026-04-03 23:39:50'),
+	(10, 9, 29, 1, 4500000, 4500000, '2026-04-03 23:39:50'),
+	(11, 10, 4, 1, 11000000, 11000000, '2026-04-03 23:39:50'),
+	(12, 11, 9, 1, 3000000, 3000000, '2026-04-03 23:39:50'),
+	(13, 12, 5, 1, 7500000, 7500000, '2026-04-03 23:39:50'),
+	(14, 13, 7, 1, 6500000, 6500000, '2026-04-03 23:39:50'),
+	(15, 14, 8, 1, 5000000, 5000000, '2026-04-03 23:39:50'),
+	(16, 15, 5, 1, 8000000, 8000000, '2026-04-03 23:39:50'),
+	(17, 16, 29, 1, 4200000, 4200000, '2026-04-03 23:39:50'),
+	(18, 17, 8, 1, 4700000, 4700000, '2026-04-03 23:39:50'),
+	(19, 18, 9, 1, 2200000, 2200000, '2026-04-03 23:39:50'),
+	(20, 19, 6, 1, 3500000, 3500000, '2026-04-03 23:39:50'),
+	(21, 20, 7, 1, 6000000, 6000000, '2026-04-03 23:39:50'),
+	(22, 21, 5, 1, 7500000, 7500000, '2026-04-03 23:39:50');
+
+
+-- Dumping structure for table ecommerce_almus.cart_items
+CREATE TABLE IF NOT EXISTS `cart_items` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int unsigned NOT NULL,
+  `product_id` int unsigned NOT NULL,
+  `quantity` int unsigned NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_cart_product` (`user_id`,`product_id`) USING BTREE,
+  KEY `idx_cart_items_product` (`product_id`),
+  CONSTRAINT `fk_cart_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `FK_cart_items_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_cart_items_quantity` CHECK ((`quantity` > 0))
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table ecommerce_almus.cart_items: ~0 rows (approximately)
+
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

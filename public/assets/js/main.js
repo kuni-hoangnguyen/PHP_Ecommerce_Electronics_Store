@@ -97,56 +97,145 @@ priceFilterForms.forEach((form) => {
 // Cart quantity update //
 /////////////////////////
 
-document.querySelectorAll('.cart-table input[type="number"]').forEach((input) => {
-  input.addEventListener('change', (event) => {
-    const newQuantity = event.target.value;
-    const productId = event.target.getAttribute('data-product-id');
+document.addEventListener('DOMContentLoaded', () => {
+  const cartTable = document.querySelector('.cart-table');
+  if (!cartTable) {
+    return;
+  }
 
-    if (newQuantity < 1) {
-      event.target.value = 1;
+  const checkoutBtn = document.getElementById('checkout-selected-btn');
+  const selectedSummaryList = document.getElementById('selected-summary-list');
+  const selectedSummaryEmpty = document.getElementById('selected-summary-empty');
+  const selectedSummaryTotal = document.getElementById('selected-summary-total');
+
+  const formatCurrency = (value) => Number(value || 0).toLocaleString('vi-VN') + 'đ';
+
+  const getSelectedIds = () => Array
+    .from(document.querySelectorAll('.cart-item-checkbox:checked'))
+    .map((input) => Number(input.value))
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+  const refreshSelectedSummary = () => {
+    const selectedIds = getSelectedIds();
+
+    if (!selectedSummaryList || !selectedSummaryTotal) {
       return;
     }
-    else if (newQuantity > parseInt(event.target.max)) {
-      event.target.value = event.target.max;
+
+    if (selectedIds.length === 0) {
+      selectedSummaryList.innerHTML = '<li class="list-group-item text-muted" id="selected-summary-empty">Chưa chọn sản phẩm.</li>';
+      selectedSummaryTotal.textContent = '0đ';
       return;
     }
 
-    fetch('/cart/update', {
+    fetch('/cart/summary', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ product_id: Number(productId), quantity: Number(newQuantity) }),
+      body: JSON.stringify({ product_ids: selectedIds }),
     })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          const row = event.target.closest('tr');
-          const price = Number(row.querySelector('td:nth-child(2)').textContent.replace(/[^0-9]/g, ''));
-          const totalCell = row.querySelector('td:nth-child(4)');
-          totalCell.textContent = (price * newQuantity).toLocaleString('vi-VN') + 'đ';
-
-          const totalDisplay = document.querySelector('.cart-total');
-          if (totalDisplay) {
-            const totalItems = Array.from(document.querySelectorAll('.cart-table tbody tr')).reduce((sum, tr) => {
-              const qty = Number(tr.querySelector('input[type="number"]').value);
-              return sum + qty;
-            }, 0);
-            const totalPrice = Array.from(document.querySelectorAll('.cart-table tbody tr')).reduce((sum, tr) => {
-              const price = Number(tr.querySelector('td:nth-child(2)').textContent.replace(/[^0-9]/g, ''));
-              const qty = Number(tr.querySelector('input[type="number"]').value);
-              return sum + (price * qty);
-            }, 0);
-
-            totalDisplay.querySelector('span').textContent = 'x ' + totalItems;
-            totalDisplay.querySelector('.total-price').innerHTML = 'Tổng tiền: <strong class="text-primary">' + totalPrice.toLocaleString('vi-VN') + 'đ' + '</strong>';
-          }
+      .then((response) => response.json())
+      .then((data) => {
+        if (!data.success) {
+          return;
         }
+
+        const items = Array.isArray(data.items) ? data.items : [];
+
+        if (items.length === 0) {
+          selectedSummaryList.innerHTML = '<li class="list-group-item text-muted" id="selected-summary-empty">Chưa chọn sản phẩm.</li>';
+          selectedSummaryTotal.textContent = '0đ';
+          return;
+        }
+
+        selectedSummaryList.innerHTML = items
+          .map((item) => '<li class="list-group-item d-flex justify-content-between align-items-center">'
+              + item.name
+              + '<span class="badge text-primary">x '
+              + Number(item.quantity)
+              + '</span></li>')
+          .join('');
+
+        selectedSummaryTotal.textContent = formatCurrency(data.total_amount || 0);
       })
-      .catch(error => {
-        console.error('Error updating cart:', error);
+      .catch((error) => {
+        console.error('Error loading selected cart summary:', error);
       });
+  };
+
+  document.querySelectorAll('.cart-item-checkbox').forEach((checkbox) => {
+    checkbox.addEventListener('change', refreshSelectedSummary);
   });
+
+  document.querySelectorAll('.cart-table input[type="number"]').forEach((input) => {
+    input.addEventListener('change', (event) => {
+      const target = event.target;
+      const newQuantity = Number(target.value);
+      const maxQuantity = Number(target.max);
+      const productId = Number(target.getAttribute('data-product-id'));
+
+      if (newQuantity < 1) {
+        target.value = '1';
+        return;
+      }
+
+      if (newQuantity > maxQuantity) {
+        target.value = String(maxQuantity);
+        return;
+      }
+
+      fetch('/cart/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ product_id: productId, quantity: newQuantity }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (!data.success) {
+            return;
+          }
+
+          const row = target.closest('tr');
+          if (!row) {
+            return;
+          }
+
+          const unitPriceCell = row.querySelector('td:nth-child(3)');
+          const rowTotalCell = row.querySelector('td:nth-child(5)');
+          if (!unitPriceCell || !rowTotalCell) {
+            return;
+          }
+
+          const unitPrice = Number(unitPriceCell.textContent.replace(/[^0-9]/g, ''));
+          rowTotalCell.textContent = formatCurrency(unitPrice * Number(target.value));
+
+          refreshSelectedSummary();
+        })
+        .catch((error) => {
+          console.error('Error updating cart quantity:', error);
+        });
+    });
+  });
+
+  if (checkoutBtn) {
+    checkoutBtn.addEventListener('click', () => {
+      const selectedIds = getSelectedIds();
+
+      if (selectedIds.length === 0) {
+        alert('Vui lòng chọn ít nhất 1 sản phẩm để thanh toán.');
+        return;
+      }
+
+      window.location.href = '/checkout?selected=' + encodeURIComponent(selectedIds.join(','));
+    });
+  }
+
+  if (selectedSummaryEmpty) {
+    refreshSelectedSummary();
+  }
 });
 
 ////////////////////////////////////

@@ -33,6 +33,7 @@ return [
         '/signup'           => ['AuthController', 'postSignupForm'],
 
         '/cart/update'      => ['CartController', 'cartUpdate'],
+        '/cart/summary'     => ['CartController', 'summary'],
         '/cart/add'    => ['CartController', 'addToCart'],
         '/cart/remove' => ['CartController', 'removeFromCart'],
 

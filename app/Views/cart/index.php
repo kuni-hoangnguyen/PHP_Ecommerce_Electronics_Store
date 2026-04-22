@@ -18,7 +18,8 @@
                         $backUrl      = $refererPath . ($refererQuery ? '?' . $refererQuery : '');
                     }
                 ?>
-                <a href="<?php echo htmlspecialchars($backUrl, ENT_QUOTES, 'UTF-8') ?>" class="text-decoration-none text-secondary mb-3 d-inline-block">
+                <a href="<?php echo htmlspecialchars($backUrl, ENT_QUOTES, 'UTF-8') ?>"
+                    class="text-decoration-none text-secondary mb-3 d-inline-block">
                     <i class="bi bi-arrow-left me-1"></i> Quay lại
                 </a>
 
@@ -28,6 +29,7 @@
                     <table class="table cart-table align-middle mb-0">
                         <thead>
                             <tr>
+                                <th scope="col"></th>
                                 <th scope="col">Sản phẩm</th>
                                 <th scope="col">Giá</th>
                                 <th scope="col">Số lượng</th>
@@ -39,9 +41,14 @@
                             <?php foreach ($cartItems as $item): ?>
                             <tr>
                                 <td>
+                                    <input type="checkbox" class="form-check-input cart-item-checkbox"
+                                        value="<?php echo (int) $item['id'] ?>">
+                                </td>
+                                <td>
                                     <div class="d-flex align-items-center">
                                         <img src="/storage/products/<?php echo htmlspecialchars($item['image_path']) ?>"
-                                            alt="<?php echo htmlspecialchars($item['name']) ?>" class="rounded" width="60">
+                                            alt="<?php echo htmlspecialchars($item['name']) ?>" class="rounded"
+                                            width="60">
                                         <div class="ms-3">
                                             <p class="fw-bold mb-1"><?php echo htmlspecialchars($item['name']) ?></p>
                                         </div>
@@ -80,18 +87,15 @@
                 <p class="text-muted mb-0">Không có sản phẩm nào trong giỏ hàng.</p>
                 <?php else: ?>
                 <p class="mb-2">Tổng sản phẩm:</p>
-                <ul class="list-group mb-3">
-                    <?php foreach ($cartItems as $item): ?>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <?php echo htmlspecialchars($item['name']) ?>
-                        <span class="badge text-primary">x <?php echo $item['quantity'] ?></span>
-                    </li>
-                    <?php endforeach; ?>
+                <ul class="list-group mb-3" id="selected-summary-list">
+                    <li class="list-group-item text-muted" id="selected-summary-empty">Chưa chọn sản phẩm.</li>
                 </ul>
                 <p class="mb-2 total-price">Tổng tiền: <strong
-                        class="text-primary"><?php echo number_format(array_sum(array_map(fn($i) => $i['price'] * $i['quantity'], $cartItems)), 0, ',', '.') ?>đ</strong>
+                        class="text-primary" id="selected-summary-total">0đ</strong>
                 </p>
-                <a href="/checkout" class="btn btn-primary w-100 mt-3">Tiến hành thanh toán</a>
+                <button type="button" id="checkout-selected-btn" class="btn btn-primary w-100 mt-3">
+                    Tiến hành thanh toán
+                </button>
                 <?php endif; ?>
             </div>
         </div>
